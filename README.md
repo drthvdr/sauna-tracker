@@ -213,4 +213,4 @@ effect isn't what you want, change the sport and sub-sport in `SaunaSession.star
 
 ## License
 
-No license has been chosen yet.
+[MIT](LICENSE).
