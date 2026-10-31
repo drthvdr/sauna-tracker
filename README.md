@@ -94,15 +94,97 @@ monkeyc -d instinct3solar45mm -f monkey.jungle -o bin/SaunaTracker.prg -y /path/
 
 ## Install on the watch
 
-1. Plug the watch into your computer over USB.
-2. Copy `bin/SaunaTracker.prg` into the watch's `GARMIN/Apps/` folder.
-3. Eject the watch and unplug it. The app appears on the watch under its activities or apps list.
+The Instinct 3 transfers files over **MTP**, so on macOS it does not show up as a drive in
+Finder. Copying the app means putting `bin/SaunaTracker.prg` into the watch's `Garmin/Apps`
+folder with an MTP tool.
 
-If the watch doesn't show up as a drive:
+1. **Quit Garmin Express and its background service.** Garmin Express takes exclusive hold of
+   the watch, and while it does no other tool can see it. Quit the app, then quit the
+   "Garmin Express Service" process too (Activity Monitor, or `pkill -f "Garmin Express Service"`).
+   To check that the watch is free:
 
-- **Garmin Express** may be holding it. Quit Garmin Express and its background service, then
-  reconnect the watch.
-- The watch may be using MTP, which macOS can't read by itself. Use an MTP tool such as OpenMTP.
+   ```bash
+   ioreg -p IOUSB -l -w0 | grep UsbExclusiveOwner   # no output means nothing is holding it
+   ```
+
+2. **Plug the watch in** over USB.
+3. **Copy the file** to `Garmin/Apps` with either:
+   - a GUI MTP tool such as [OpenMTP](https://openmtp.ganeshrvel.com/) (not tried here), or
+   - the command line with libmtp, below.
+4. **Unplug the watch.** Then look for **Sauna** in the watch's activity or apps list.
+5. **Start Garmin Express again** so normal syncing to Garmin Connect works.
+
+### Command line with libmtp
+
+```bash
+brew install libmtp
+mtp-detect | grep -E "Manufacturer|Model"   # should list the Instinct 3
+mtp-folders | grep -v association           # find the ID of the Apps folder under Garmin
+```
+
+`mtp-folders` prints one folder per line as `ID`, then the name indented by depth. Note the ID
+of `Apps` directly under `Garmin` (it was `16777221` on the watch this was written on; yours may
+differ).
+
+The obvious `mtp-sendfile bin/SaunaTracker.prg Garmin/Apps/SaunaTracker.prg` fails on the
+Instinct 3 with `get_suggested_storage_id(): could not get storage id from parent id`, because
+libmtp cannot look up the storage from the parent folder. Naming the storage yourself avoids
+it. Save this as `sendmtp.c`:
+
+<details>
+<summary>sendmtp.c</summary>
+
+```c
+#include <libmtp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+/* usage: sendmtp <local file> <name on watch> <parent folder id> */
+int main(int argc, char **argv) {
+    struct stat st;
+    if (argc != 4 || stat(argv[1], &st) != 0) {
+        fprintf(stderr, "usage: sendmtp <file> <name> <folder id>\n");
+        return 2;
+    }
+    LIBMTP_Init();
+    LIBMTP_mtpdevice_t *dev = LIBMTP_Get_First_Device();
+    if (!dev || LIBMTP_Get_Storage(dev, LIBMTP_STORAGE_SORTBY_NOTSORTED) != 0 || !dev->storage) {
+        fprintf(stderr, "no MTP device found\n");
+        return 1;
+    }
+    LIBMTP_file_t *f = LIBMTP_new_file_t();
+    f->filename = strdup(argv[2]);
+    f->filesize = st.st_size;
+    f->filetype = LIBMTP_FILETYPE_UNKNOWN;
+    f->parent_id = strtoul(argv[3], NULL, 10);
+    f->storage_id = dev->storage->id; /* naming the storage avoids the failing lookup */
+    int rc = LIBMTP_Send_File_From_File(dev, argv[1], f, NULL, NULL);
+    if (rc) LIBMTP_Dump_Errorstack(dev); else printf("sent, object id %u\n", f->item_id);
+    LIBMTP_destroy_file_t(f);
+    LIBMTP_Release_Device(dev);
+    return rc != 0;
+}
+```
+
+</details>
+
+Then build and run it, using your Apps folder ID:
+
+```bash
+cc -I/opt/homebrew/include -L/opt/homebrew/lib -lmtp -o sendmtp sendmtp.c
+./sendmtp bin/SaunaTracker.prg SaunaTracker.prg 16777221
+```
+
+To check the copy, `mtp-files` lists it with its parent ID, and `mtp-getfile <file id> copy.prg`
+followed by `shasum -a 256` on both files confirms it is identical to the build.
+
+### If the watch is not found
+
+- Anything else holding the USB device blocks every tool. Garmin Express is the usual cause.
+- On macOS, `mtp-detect` may print "Device ... is UNKNOWN in libmtp". That warning is harmless;
+  the watch is detected as an MTP device anyway.
 
 Sessions sync to Garmin Connect through the normal watch sync.
 
