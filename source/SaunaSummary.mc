@@ -25,7 +25,11 @@ class SaunaSummaryView extends WatchUi.View {
     function onUpdate(dc as Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
-        var box = SaunaLayout.subscreenBox(w);
+        var box = SaunaLayout.subscreenBox();
+        if (box == null) {
+            SaunaRound.drawSummary(dc, _summary, _page);
+            return;
+        }
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_WHITE);
         dc.clear();
@@ -91,6 +95,15 @@ class SaunaSummaryDelegate extends WatchUi.BehaviorDelegate {
     function initialize(view as SaunaSummaryView) {
         BehaviorDelegate.initialize();
         _view = view;
+    }
+
+    // Ignore touches so a stray tap or swipe doesn't close the summary.
+    function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        return true;
+    }
+
+    function onSwipe(evt as WatchUi.SwipeEvent) as Boolean {
+        return true;
     }
 
     function onNextPage() as Boolean {

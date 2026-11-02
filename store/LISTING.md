@@ -37,20 +37,22 @@ start a yoga or cardio workout and rename it afterwards.
 
 **Buttons**
 
-- GPS: start, or stop and open the menu
+- START/STOP (labeled GPS on the Instinct): start, or stop and open the menu
 - BACK: end the current heat
 - UP / DOWN (before you start): pick the heat alert and the heart-rate limit
 
 **Works with**
 
-Garmin Instinct 3 Solar (45mm and 50mm). Not tested on other devices.
+Garmin Instinct 3 Solar (45mm and 50mm) and Garmin Forerunner 965. Not tested on
+other devices. On the Forerunner 965 the touchscreen is ignored while the app is
+open, so sweat can't cause stray taps; use the buttons.
 
 **Heat warning**
 
 Garmin lists the Instinct 3's operating temperature as up to 60 C (140 F), which
-is lower than many saunas. Wearing the watch in a hot sauna is at your own risk
-and could shorten its battery life or damage it. Wear it on a cooler bench, or
-take it off for part of a session.
+is lower than many saunas; check your own watch's manual for its limit. Wearing
+the watch in a hot sauna is at your own risk and could shorten its battery life
+or damage it. Wear it on a cooler bench, or take it off for part of a session.
 
 **Not a medical device.** The app times sessions and records data. It does not
 diagnose, treat or monitor health conditions, and it does not tell you whether
@@ -89,7 +91,8 @@ First release.
 
 Screenshots are not included: they should come from the simulator or the
 watch, not be mocked up. Suggested set: the recording screen, the idle screen
-with the alert settings, summary page 1, and the heats page.
+with the alert settings, summary page 1, and the heats page. Take them for the
+Instinct 3 Solar and, if you list it, the Forerunner 965.
 
 To re-render after editing a source:
 
@@ -106,6 +109,10 @@ sips -s format jpeg -s formatOptions 85 hero-1440x720.png --out hero-1440x720.jp
    and sync. **[verify]** the activity shows in Garmin Connect with the name and
    type you want, with heart rate and calories, and the heats appear as laps.
    Check that the two alerts vibrate.
+   **[verify]** The Forerunner 965 version has only been built and run in the
+   simulator. Test it on a real 965 before listing it, or remove the 965 from the
+   manifest and from the "Works with" text above. The guidelines forbid claiming
+   compatibility you haven't confirmed.
 2. **Fix the description to match.** If Garmin Connect shows something different
    from what the description says (the lap claim, the activity type), change the
    text, not the other way round. Descriptions must be accurate.
@@ -115,8 +122,8 @@ sips -s format jpeg -s formatOptions 85 hero-1440x720.png --out hero-1440x720.jp
    monkeyc -e -r -f monkey.jungle -o SaunaTracker.iq -y ~/.garmin/developer_key.der -w
    ```
 
-   A dry run produced a package with builds for both Instinct 3 Solar part
-   numbers (006-B4585-00 and 006-B4759-00).
+   A dry run produced a package with three builds: the two Instinct 3 Solar part
+   numbers (006-B4585-00 and 006-B4759-00) and the Forerunner 965 (006-B4315-00).
 4. **Back up `~/.garmin/developer_key.der`.** Every future update must be signed
    with the same key.
 5. **Upload** the `.iq` file on Garmin's Connect IQ developer upload page (linked

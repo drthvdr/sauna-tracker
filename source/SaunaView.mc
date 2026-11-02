@@ -3,9 +3,10 @@ import Toybox.Lang;
 import Toybox.Timer;
 import Toybox.WatchUi;
 
-// Layout: heart rate sits in the round subscreen at the top right, with the
-// status and calories to its left. The session timer is the big number in the
-// middle and the current heat is on the bottom line.
+// Layout on the Instinct: heart rate sits in the round subscreen at the top right,
+// with the status and calories to its left. The session timer is the big number in
+// the middle and the current heat is on the bottom line. Watches without a
+// subscreen use SaunaRound instead.
 class SaunaView extends WatchUi.View {
 
     private var _session as SaunaSession;
@@ -34,7 +35,11 @@ class SaunaView extends WatchUi.View {
         var h = dc.getHeight();
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var state = _session.getState();
-        var box = SaunaLayout.subscreenBox(w);
+        var box = SaunaLayout.subscreenBox();
+        if (box == null) {
+            SaunaRound.drawMain(dc, _session);
+            return;
+        }
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_WHITE);
         dc.clear();

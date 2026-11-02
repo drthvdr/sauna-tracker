@@ -40,6 +40,16 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
         return false;
     }
 
+    // Touch screens (Forerunner 965): sweat causes stray taps and swipes, and a tap
+    // would otherwise act like START. The buttons do everything.
+    function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        return true;
+    }
+
+    function onSwipe(evt as WatchUi.SwipeEvent) as Boolean {
+        return true;
+    }
+
     // UP and DOWN pick the heat alert and the heart-rate limit before starting.
     function onPreviousPage() as Boolean {
         if (_session.getState() == STATE_IDLE) {
