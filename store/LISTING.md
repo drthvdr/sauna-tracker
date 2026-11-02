@@ -84,21 +84,39 @@ First release.
 | File | Use |
 |---|---|
 | `icon-500.png` | Store app icon, 500x500, sRGB, no transparent background |
-| `icon-128.png` | Optional 128x128 icon for the on-device store |
+| `icon-128-24bit.png` | On-device store icon for AMOLED watches: 128x128, 24-bit RGB, no transparency |
+| `icon-128-64color.png` | On-device store icon for memory-in-pixel watches: 128x128, 8-bit palette holding Garmin's 64-color palette (flat colors, 6 used) |
+| `icon-128.png` | Older 128x128 icon, replaced by the two above |
 | `hero-1440x720.png` | Hero image, 1440x720 (about 930 KB) |
 | `hero-1440x720.jpg` | Same image as a JPEG (about 98 KB), in case the upload rejects large files |
-| `icon.svg`, `hero.svg` | Editable sources for the images |
+| `icon.svg`, `icon-lowcolor.svg`, `hero.svg` | Editable sources for the images |
+| `device_icons.py` | Makes the two on-device icons from rendered PNGs (plain Python) |
 
-Screenshots are not included: they should come from the simulator or the
-watch, not be mocked up. Suggested set: the recording screen, the idle screen
-with the alert settings, summary page 1, and the heats page. Take them for the
-Instinct 3 Solar and, if you list it, the Forerunner 965.
+### Screenshots
+
+In `screenshots/`, named `<watch>-<screen>-<source>.jpg`. Each is under 150 KB (a limit
+mentioned on the Garmin developer forum, not confirmed by Garmin).
+
+| File | Shows |
+|---|---|
+| `fr965-recording-simulator.jpg` | Forerunner 965 simulator, recording screen (1031x1400) |
+| `fr965-summary-simulator.jpg` | Forerunner 965 simulator, summary, first page (1039x1400) |
+
+The 965 images are simulator captures, so heart rate shows `--` and calories 0; recapture
+them with simulated heart-rate data for a better listing. Screenshots should come from the
+simulator or a watch, never be mocked up. There are no Instinct 3 Solar screenshots in this
+folder yet: use simulator captures, or watch-only crops of photos (photos of a worn watch
+show the wearer, so keep them out of this public repo). Still to capture, for each watch:
+the idle screen with the alert settings and the heats page.
 
 To re-render after editing a source:
 
 ```bash
 sips -s format png icon.svg --out icon-500.png
-sips -z 128 128 icon-500.png --out icon-128.png
+sips -s format png icon-lowcolor.svg --out /tmp/low500.png
+sips -z 128 128 icon-500.png --out /tmp/full128.png
+sips -z 128 128 /tmp/low500.png --out /tmp/low128.png
+python3 -I device_icons.py /tmp/full128.png /tmp/low128.png .
 sips -s format png hero.svg --out hero-1440x720.png
 sips -s format jpeg -s formatOptions 85 hero-1440x720.png --out hero-1440x720.jpg
 ```
