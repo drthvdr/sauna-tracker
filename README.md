@@ -112,6 +112,38 @@ DEVICE=vivoactive5 ./build.sh  # vivoactive 5: bin/SaunaTracker-vivoactive5.prg
 
 The simulator shows one watch at a time, so running a second device switches it.
 
+### Simulating heart rate
+
+The simulator has no heart rate until you start simulated data, so the screens show `--`.
+With the simulator running, start it with:
+
+```bash
+"$(cat "$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg")/bin/shell" fit_parse --simulate
+```
+
+Heart rate then shows up even before a session starts. Use `--stop` instead of `--simulate` to
+end it. The simulator's Simulation > FIT Data menu should do the same.
+
+## Tests
+
+Unit tests are in `source/SaunaTests.mc` and run in the Connect IQ simulator with the SDK's
+built-in test runner. They cover time formatting, the alert settings and how they are saved, the
+tap targets, and the session lifecycle (start, mark a heat, stop, resume, save, discard). Test
+code is left out of normal builds.
+
+```bash
+./test.sh            # every watch in the manifest
+./test.sh fr965      # only the watches named
+```
+
+The script builds a test version for each watch, runs it in the simulator, and exits with 1 if
+anything fails. It reads the result from the runner's output, because `monkeydo` exits with 1
+even when every test passes. The tests use the simulator window, so don't leave another app
+running in it. Screen layouts are not covered; check those by eye.
+
+There is no GitHub Action yet. A CI run would need the SDK's device files, which Garmin only
+gives to logged-in accounts, so it would mean storing Garmin credentials as repository secrets.
+
 Without `build.sh`:
 
 ```bash
@@ -229,6 +261,7 @@ effect isn't what you want, change the sport and sub-sport in `SaunaSession.star
 |---|---|
 | `manifest.xml`, `monkey.jungle` | App id, devices, permissions, build config |
 | `build.sh` | Build and simulator helper (macOS); `DEVICE=` picks the watch |
+| `test.sh` | Runs the unit tests in the simulator, one watch at a time |
 | `source/SaunaApp.mc` | App entry point; saves an in-progress session on exit |
 | `source/SaunaSession.mc` | Recording, heats, heart-rate stats, alerts, saved settings |
 | `source/SaunaView.mc` | Main screen for watches with the Instinct subscreen |
@@ -237,6 +270,7 @@ effect isn't what you want, change the sport and sub-sport in `SaunaSession.star
 | `source/SaunaDelegate.mc` | Button handling, touch guard, and the Stopped and Discard menus |
 | `source/SaunaLayout.mc` | Subscreen lookup, heart-rate circle and font-fitting helpers |
 | `source/SaunaFormat.mc` | Time formatting |
+| `source/SaunaTests.mc` | Unit tests (left out of normal builds) |
 | `resources/` | App name and launcher icon |
 | `resources-fr965/` | Launcher icon sized for the Forerunner 965 |
 | `resources-vivoactive5/` | Launcher icon sized for the vivoactive 5 |
