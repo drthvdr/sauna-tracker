@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.WatchUi;
 
 // Drawing helpers shared by the main and summary screens.
@@ -18,6 +19,13 @@ module SaunaLayout {
             return [sub.x, sub.y, sub.width, sub.height] as Array<Number>;
         }
         return null;
+    }
+
+    // True if the watch has both UP and DOWN buttons. The vivoactive 5 has only START and
+    // BACK, so there the alert settings and summary pages are driven by touch instead.
+    function hasPageButtons() as Boolean {
+        var both = System.BUTTON_INPUT_UP | System.BUTTON_INPUT_DOWN;
+        return (System.getDeviceSettings().inputButtons & both) == both;
     }
 
     // The first font whose text fits in maxWidth, or the last font if none do.

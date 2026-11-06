@@ -97,12 +97,20 @@ class SaunaSummaryDelegate extends WatchUi.BehaviorDelegate {
         _view = view;
     }
 
-    // Ignore touches so a stray tap or swipe doesn't close the summary.
+    // A stray tap or swipe must not close the summary, so touch never closes it. On a watch
+    // with no UP/DOWN buttons (vivoactive 5) a tap or an up/down swipe flips the page.
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        if (!SaunaLayout.hasPageButtons()) {
+            _view.togglePage();
+        }
         return true;
     }
 
     function onSwipe(evt as WatchUi.SwipeEvent) as Boolean {
+        var direction = evt.getDirection();
+        if (!SaunaLayout.hasPageButtons() && (direction == WatchUi.SWIPE_UP || direction == WatchUi.SWIPE_DOWN)) {
+            _view.togglePage();
+        }
         return true;
     }
 

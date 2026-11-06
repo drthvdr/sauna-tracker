@@ -39,13 +39,14 @@ start a yoga or cardio workout and rename it afterwards.
 
 - START/STOP (labeled GPS on the Instinct): start, or stop and open the menu
 - BACK: end the current heat
-- UP / DOWN (before you start): pick the heat alert and the heart-rate limit
+- UP / DOWN (before you start): pick the heat alert and the heart-rate limit. On the
+  vivoactive 5, which has no UP or DOWN buttons, tap the setting on the screen instead.
 
 **Works with**
 
-Garmin Instinct 3 Solar (45mm and 50mm) and Garmin Forerunner 965. Not tested on
-other devices. On the Forerunner 965 the touchscreen is ignored while the app is
-open, so sweat can't cause stray taps; use the buttons.
+Garmin Instinct 3 Solar (45mm and 50mm), Garmin Forerunner 965 and Garmin vivoactive 5.
+Not tested on other devices. On the touchscreen watches the screen is ignored while
+recording, so sweat can't cause stray taps; use the buttons.
 
 **Heat warning**
 
@@ -127,6 +128,8 @@ sips -s format jpeg -s formatOptions 85 hero-1440x720.png --out hero-1440x720.jp
    and sync. **[verify]** the activity shows in Garmin Connect with the name and
    type you want, with heart rate and calories, and the heats appear as laps.
    Check that the two alerts vibrate.
+   **[verify]** The vivoactive 5 version (new, with touch controls) has only been built
+   and started in the simulator; check its screens and taps before listing it.
    **[verify]** The Forerunner 965 version has only been built and run in the
    simulator. Test it on a real 965 before listing it, or remove the 965 from the
    manifest and from the "Works with" text above. The guidelines forbid claiming
@@ -140,8 +143,9 @@ sips -s format jpeg -s formatOptions 85 hero-1440x720.png --out hero-1440x720.jp
    monkeyc -e -r -f monkey.jungle -o SaunaTracker.iq -y ~/.garmin/developer_key.der -w
    ```
 
-   A dry run produced a package with three builds: the two Instinct 3 Solar part
-   numbers (006-B4585-00 and 006-B4759-00) and the Forerunner 965 (006-B4315-00).
+   A dry run produced a package with four builds: the two Instinct 3 Solar part
+   numbers (006-B4585-00 and 006-B4759-00), the Forerunner 965 (006-B4315-00) and the
+   vivoactive 5 (006-B4426-00).
 4. **Back up `~/.garmin/developer_key.der`.** Every future update must be signed
    with the same key.
 5. **Upload** the `.iq` file on Garmin's Connect IQ developer upload page (linked

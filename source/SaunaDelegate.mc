@@ -40,9 +40,21 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
         return false;
     }
 
-    // Touch screens (Forerunner 965): sweat causes stray taps and swipes, and a tap
-    // would otherwise act like START. The buttons do everything.
+    // Touch screens: sweat causes stray taps and swipes, and a tap would otherwise act
+    // like START, so touches are ignored. The one exception is a watch with no UP/DOWN
+    // buttons (vivoactive 5): before a session starts, tapping an alert-setting row
+    // changes it. Nothing responds to touch while recording.
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        if (!SaunaLayout.hasPageButtons() && _session.getState() == STATE_IDLE) {
+            var which = SaunaRound.settingAt(evt.getCoordinates()[1]);
+            if (which == :heat) {
+                _session.cycleHeatAlert();
+                WatchUi.requestUpdate();
+            } else if (which == :hr) {
+                _session.cycleHrLimit();
+                WatchUi.requestUpdate();
+            }
+        }
         return true;
     }
 

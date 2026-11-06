@@ -8,6 +8,10 @@ import Toybox.System;
 // the screen and kept inside the visible circle.
 module SaunaRound {
 
+    // Where the two alert-setting rows were last drawn, so a tap can be matched to one.
+    var _heatRowY = -1;
+    var _hrRowY = -1;
+
     // Font sets from largest to smallest. Index 0 status, 1 heart rate, 2 timer, 3 detail rows.
     function fontSets() as Array {
         return [
@@ -76,6 +80,27 @@ module SaunaRound {
         drawCentered(dc, w / 2, y, font, text, color);
     }
 
+    // Which alert-setting row a tap at height y landed on, if any. Each row's touch
+    // target runs halfway to the next one.
+    function settingAt(y as Numeric) as Symbol? {
+        if (_heatRowY < 0 || _hrRowY <= _heatRowY) {
+            return null;
+        }
+        var half = (_hrRowY - _heatRowY) / 2.0;
+        if ((y - _heatRowY).abs() <= half) {
+            return :heat;
+        }
+        if ((y - _hrRowY).abs() <= half) {
+            return :hr;
+        }
+        return null;
+    }
+
+    // Hint for flipping summary pages: a button on watches that have one, else a tap.
+    function pageHint(what as String) as String {
+        return (SaunaLayout.hasPageButtons() ? "DOWN: " : "Tap: ") + what;
+    }
+
     function statusText(session as SaunaSession, state as Number) as String {
         if (state == STATE_PAUSED) {
             return "Stopped";
@@ -102,6 +127,8 @@ module SaunaRound {
         var bottom = h * 0.92;
         var fonts = pickFonts(dc, rows, bottom - top);
         var ys = rowCenters(dc, fonts, rows, top, bottom);
+        _heatRowY = -1;
+        _hrRowY = -1;
 
         drawCentered(dc, w / 2, ys[0], fonts[0], statusText(session, state), Graphics.COLOR_LT_GRAY);
         drawHeartRate(dc, w, ys[1], fonts[1], fonts[3], session.heartRate(), session.isHrHigh());
@@ -119,9 +146,14 @@ module SaunaRound {
         if (idle) {
             var heatMin = session.getHeatAlertMin();
             var hrLimit = session.getHrLimit();
-            drawFitted(dc, w, ys[3], detailFonts, "UP: heat alert " + (heatMin > 0 ? heatMin.toString() + " min" : "off"), Graphics.COLOR_ORANGE);
-            drawFitted(dc, w, ys[4], detailFonts, "DOWN: HR limit " + (hrLimit > 0 ? hrLimit.toString() : "off"), Graphics.COLOR_LT_GRAY);
-            drawFitted(dc, w, ys[5], detailFonts, "START to begin", Graphics.COLOR_LT_GRAY);
+            var buttons = SaunaLayout.hasPageButtons();
+            var heatValue = heatMin > 0 ? heatMin.toString() + " min" : "off";
+            var hrValue = hrLimit > 0 ? hrLimit.toString() : "off";
+            drawFitted(dc, w, ys[3], detailFonts, (buttons ? "UP: heat alert " : "Heat alert: ") + heatValue, Graphics.COLOR_ORANGE);
+            drawFitted(dc, w, ys[4], detailFonts, (buttons ? "DOWN: HR limit " : "HR limit: ") + hrValue, Graphics.COLOR_LT_GRAY);
+            drawFitted(dc, w, ys[5], detailFonts, buttons ? "START to begin" : "Tap a setting. START to begin", Graphics.COLOR_LT_GRAY);
+            _heatRowY = ys[3];
+            _hrRowY = ys[4];
         } else {
             var heatText = "Heat " + session.heatNumber() + "  " + SaunaFormat.duration(session.heatMs());
             var target = session.getHeatAlertMin();
@@ -200,7 +232,7 @@ module SaunaRound {
         drawPair(dc, w, ys[2], fonts[3], "avg " + (avgHr != null ? avgHr.toString() : "--"), "max " + (maxHr != null ? maxHr.toString() : "--"), Graphics.COLOR_RED);
         drawPair(dc, w, ys[3], fonts[3], count + (count == 1 ? " heat" : " heats"), summary.calories + " kcal", Graphics.COLOR_ORANGE);
 
-        drawFitted(dc, w, ys[4], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, "DOWN: heats", Graphics.COLOR_LT_GRAY);
+        drawFitted(dc, w, ys[4], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, pageHint("heats"), Graphics.COLOR_LT_GRAY);
     }
 
     function drawHeats(dc as Dc, w as Number, h as Number, summary as SessionSummary) as Void {
@@ -229,7 +261,7 @@ module SaunaRound {
         if (hasMore) {
             drawFitted(dc, w, ys[1 + shown], listFonts, "+" + (heats.size() - shown) + " more", Graphics.COLOR_ORANGE);
         }
-        drawFitted(dc, w, ys[ys.size() - 1], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, "DOWN: totals", Graphics.COLOR_LT_GRAY);
+        drawFitted(dc, w, ys[ys.size() - 1], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, pageHint("totals"), Graphics.COLOR_LT_GRAY);
     }
 
     // Two short texts side by side on one row.
