@@ -1,1 +1,3 @@
 project.manifest = manifest.xml
+# The Forerunner 165 Music uses the same launcher icon as the Forerunner 165.
+fr165m.resourcePath = $(fr165m.resourcePath);resources-fr165

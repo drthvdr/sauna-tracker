@@ -8,8 +8,8 @@ import Toybox.System;
 // the screen and kept inside the visible circle.
 module SaunaRound {
 
-    // Where the two alert-setting rows were last drawn, so a tap can be matched to one.
-    var _heatRowY = -1;
+    // Where the two setting rows were last drawn, so a tap can be matched to one.
+    var _timeRowY = -1;
     var _hrRowY = -1;
 
     // Font sets from largest to smallest. Index 0 status, 1 heart rate, 2 timer, 3 detail rows.
@@ -80,15 +80,15 @@ module SaunaRound {
         drawCentered(dc, w / 2, y, font, text, color);
     }
 
-    // Which alert-setting row a tap at height y landed on, if any. Each row's touch
-    // target runs halfway to the next one.
+    // Which setting row a tap at height y landed on, if any. Each row's touch target
+    // runs halfway to the next one.
     function settingAt(y as Numeric) as Symbol? {
-        if (_heatRowY < 0 || _hrRowY <= _heatRowY) {
+        if (_timeRowY < 0 || _hrRowY <= _timeRowY) {
             return null;
         }
-        var half = (_hrRowY - _heatRowY) / 2.0;
-        if ((y - _heatRowY).abs() <= half) {
-            return :heat;
+        var half = (_hrRowY - _timeRowY) / 2.0;
+        if ((y - _timeRowY).abs() <= half) {
+            return :time;
         }
         if ((y - _hrRowY).abs() <= half) {
             return :hr;
@@ -101,6 +101,14 @@ module SaunaRound {
         return (SaunaLayout.hasPageButtons() ? "DOWN: " : "Tap: ") + what;
     }
 
+    // Sweat is orange, a cold plunge blue, rest gray.
+    function phaseColor(kind as Number) as Number {
+        if (kind == PHASE_PLUNGE) {
+            return Graphics.COLOR_BLUE;
+        }
+        return kind == PHASE_REST ? Graphics.COLOR_LT_GRAY : Graphics.COLOR_ORANGE;
+    }
+
     function statusText(session as SaunaSession, state as Number) as String {
         if (state == STATE_PAUSED) {
             return "Stopped";
@@ -108,11 +116,11 @@ module SaunaRound {
         if (state == STATE_IDLE && !session.getLastResult().equals("")) {
             return session.getLastResult();
         }
-        return "Sauna";
+        return session.typeName();
     }
 
-    // The recording screen: status, heart rate, session timer, then the current heat
-    // and calories. Before starting, the detail rows show the alert settings instead.
+    // The recording screen: status, heart rate, session timer, then the phase in progress
+    // and calories. Before starting, the detail rows show the two settings instead.
     function drawMain(dc as Dc, session as SaunaSession) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
@@ -122,16 +130,33 @@ module SaunaRound {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
 
-        var rows = (idle ? [0, 1, 2, 3, 3, 3] : [0, 1, 2, 3, 3]) as Array<Number>;
+        // The settings screen has no timer: a 0:00 there says nothing and takes the room
+        // the settings rows need on the smaller screens.
+        var rows = (idle ? [0, 1, 3, 3, 3] : [0, 1, 2, 3, 3]) as Array<Number>;
         var top = h * 0.08;
         var bottom = h * 0.92;
         var fonts = pickFonts(dc, rows, bottom - top);
         var ys = rowCenters(dc, fonts, rows, top, bottom);
-        _heatRowY = -1;
+        var detailFonts = [fonts[3], Graphics.FONT_XTINY] as Array<Graphics.FontType>;
+        _timeRowY = -1;
         _hrRowY = -1;
 
         drawCentered(dc, w / 2, ys[0], fonts[0], statusText(session, state), Graphics.COLOR_LT_GRAY);
         drawHeartRate(dc, w, ys[1], fonts[1], fonts[3], session.heartRate(), session.isHrHigh());
+
+        if (idle) {
+            var minutes = session.getMaxTimeMin();
+            var hrLimit = session.getHrLimit();
+            var buttons = SaunaLayout.hasPageButtons();
+            var timeValue = minutes > 0 ? minutes.toString() + " min" : "off";
+            var hrValue = hrLimit > 0 ? hrLimit.toString() : "off";
+            drawFitted(dc, w, ys[2], detailFonts, (buttons ? "UP: max time " : "Max time: ") + timeValue, Graphics.COLOR_ORANGE);
+            drawFitted(dc, w, ys[3], detailFonts, (buttons ? "DOWN: max HR " : "Max HR: ") + hrValue, Graphics.COLOR_LT_GRAY);
+            drawFitted(dc, w, ys[4], detailFonts, buttons ? "START to begin" : "Tap a setting. START to begin", Graphics.COLOR_LT_GRAY);
+            _timeRowY = ys[2];
+            _hrRowY = ys[3];
+            return;
+        }
 
         var timerText = SaunaFormat.duration(session.timerMs());
         var timerFont = SaunaLayout.fitFont(dc, timerText, chordWidth(w, ys[2]) * 0.85, [
@@ -142,27 +167,12 @@ module SaunaRound {
         ] as Array<Graphics.FontType>);
         drawCentered(dc, w / 2, ys[2], timerFont, timerText, Graphics.COLOR_WHITE);
 
-        var detailFonts = [fonts[3], Graphics.FONT_XTINY] as Array<Graphics.FontType>;
-        if (idle) {
-            var heatMin = session.getHeatAlertMin();
-            var hrLimit = session.getHrLimit();
-            var buttons = SaunaLayout.hasPageButtons();
-            var heatValue = heatMin > 0 ? heatMin.toString() + " min" : "off";
-            var hrValue = hrLimit > 0 ? hrLimit.toString() : "off";
-            drawFitted(dc, w, ys[3], detailFonts, (buttons ? "UP: heat alert " : "Heat alert: ") + heatValue, Graphics.COLOR_ORANGE);
-            drawFitted(dc, w, ys[4], detailFonts, (buttons ? "DOWN: HR limit " : "HR limit: ") + hrValue, Graphics.COLOR_LT_GRAY);
-            drawFitted(dc, w, ys[5], detailFonts, buttons ? "START to begin" : "Tap a setting. START to begin", Graphics.COLOR_LT_GRAY);
-            _heatRowY = ys[3];
-            _hrRowY = ys[4];
-        } else {
-            var heatText = "Heat " + session.heatNumber() + "  " + SaunaFormat.duration(session.heatMs());
-            var target = session.getHeatAlertMin();
-            if (target > 0) {
-                heatText = heatText + " / " + target + "m";
-            }
-            drawFitted(dc, w, ys[3], detailFonts, heatText, Graphics.COLOR_ORANGE);
-            drawFitted(dc, w, ys[4], detailFonts, session.calories().toString() + " kcal", Graphics.COLOR_LT_GRAY);
+        var phaseText = session.phaseLabel() + "  " + SaunaFormat.duration(session.phaseMs());
+        if (session.showsMaxTime()) {
+            phaseText = phaseText + " / " + session.getMaxTimeMin() + "m";
         }
+        drawFitted(dc, w, ys[3], detailFonts, phaseText, phaseColor(session.currentPhase()));
+        drawFitted(dc, w, ys[4], detailFonts, session.calories().toString() + " kcal", Graphics.COLOR_LT_GRAY);
     }
 
     // Heart rate with its unit beside it, on a red band while over the limit.
@@ -193,7 +203,8 @@ module SaunaRound {
         dc.drawText(x + numW + gap, y + rowH * 0.12, labelFont, label, left);
     }
 
-    // Post-save summary. Page 0 has the totals, page 1 the time of each heat.
+    // Post-save summary, three pages: the totals, the time in each kind of phase, and the
+    // main phase (sweat, or plunge) of each round.
     function drawSummary(dc as Dc, summary as SessionSummary, page as Number) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
@@ -203,8 +214,10 @@ module SaunaRound {
 
         if (page == 0) {
             drawTotals(dc, w, h, summary);
+        } else if (page == 1) {
+            drawPhases(dc, w, h, summary, page);
         } else {
-            drawHeats(dc, w, h, summary);
+            drawRounds(dc, w, h, summary, page);
         }
     }
 
@@ -214,11 +227,11 @@ module SaunaRound {
         var bottom = h * 0.92;
         var fonts = pickFonts(dc, rows, bottom - top);
         var ys = rowCenters(dc, fonts, rows, top, bottom);
-        var count = summary.heatTimes.size();
+        var rounds = summary.rounds();
         var avgHr = summary.avgHr;
         var maxHr = summary.maxHr;
 
-        drawCentered(dc, w / 2, ys[0], fonts[0], "Saved", Graphics.COLOR_LT_GRAY);
+        drawCentered(dc, w / 2, ys[0], fonts[0], "Saved 1/" + SUMMARY_PAGES, Graphics.COLOR_LT_GRAY);
 
         var totalText = SaunaFormat.duration(summary.totalMs);
         var totalFont = SaunaLayout.fitFont(dc, totalText, chordWidth(w, ys[1]) * 0.85, [
@@ -230,20 +243,46 @@ module SaunaRound {
         drawCentered(dc, w / 2, ys[1], totalFont, totalText, Graphics.COLOR_WHITE);
 
         drawPair(dc, w, ys[2], fonts[3], "avg " + (avgHr != null ? avgHr.toString() : "--"), "max " + (maxHr != null ? maxHr.toString() : "--"), Graphics.COLOR_RED);
-        drawPair(dc, w, ys[3], fonts[3], count + (count == 1 ? " heat" : " heats"), summary.calories + " kcal", Graphics.COLOR_ORANGE);
+        drawPair(dc, w, ys[3], fonts[3], rounds + (rounds == 1 ? " round" : " rounds"), summary.calories + " kcal", Graphics.COLOR_ORANGE);
 
-        drawFitted(dc, w, ys[4], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, pageHint("heats"), Graphics.COLOR_LT_GRAY);
+        drawFitted(dc, w, ys[4], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, pageHint("phases"), Graphics.COLOR_LT_GRAY);
     }
 
-    function drawHeats(dc as Dc, w as Number, h as Number, summary as SessionSummary) as Void {
-        var heats = summary.heatTimes;
-        var maxRows = 5;
-        // With more heats than rows, the last row says how many are not shown.
-        var shown = heats.size() > maxRows ? maxRows - 1 : heats.size();
-        var hasMore = shown < heats.size();
+    // Total time in each kind of phase this session type has, in that phase's color.
+    function drawPhases(dc as Dc, w as Number, h as Number, summary as SessionSummary, page as Number) as Void {
+        var kinds = SaunaTypes.sequence(summary.type);
+        var lines = [] as Array<String>;
+        var colors = [] as Array<Number>;
+        for (var i = 0; i < kinds.size(); i += 1) {
+            lines.add(SaunaTypes.phaseName(kinds[i]) + "  " + SaunaFormat.duration(summary.totalFor(kinds[i])));
+            colors.add(phaseColor(kinds[i]));
+        }
+        drawList(dc, w, h, "Phases " + (page + 1) + "/" + SUMMARY_PAGES, lines, colors, null, pageHint("rounds"));
+    }
 
+    // The main phase (sweat, or plunge in a plunge-only session) of each round.
+    function drawRounds(dc as Dc, w as Number, h as Number, summary as SessionSummary, page as Number) as Void {
+        var times = summary.mainTimes();
+        var maxRows = 5;
+        // With more rounds than rows, the last row says how many are not shown.
+        var shown = times.size() > maxRows ? maxRows - 1 : times.size();
+        var color = phaseColor(SaunaTypes.timedPhase(summary.type));
+
+        var lines = [] as Array<String>;
+        var colors = [] as Array<Number>;
+        for (var i = 0; i < shown; i += 1) {
+            lines.add((i + 1).toString() + "   " + SaunaFormat.duration(times[i]));
+            colors.add(color);
+        }
+        var more = shown < times.size() ? "+" + (times.size() - shown) + " more" : null;
+        drawList(dc, w, h, "Rounds " + (page + 1) + "/" + SUMMARY_PAGES, lines, colors, more, pageHint("totals"));
+    }
+
+    // A title, a list of centered lines (each in its own color), an optional last line,
+    // and a hint at the bottom.
+    function drawList(dc as Dc, w as Number, h as Number, title as String, lines as Array<String>, colors as Array<Number>, more as String?, hint as String) as Void {
         var rows = [0] as Array<Number>;
-        for (var i = 0; i < shown + (hasMore ? 1 : 0); i += 1) {
+        for (var i = 0; i < lines.size() + (more != null ? 1 : 0); i += 1) {
             rows.add(3);
         }
         rows.add(0);
@@ -253,15 +292,16 @@ module SaunaRound {
         var fonts = pickFonts(dc, rows, bottom - top);
         var ys = rowCenters(dc, fonts, rows, top, bottom);
         var listFonts = [fonts[3], Graphics.FONT_XTINY] as Array<Graphics.FontType>;
+        var smallFonts = [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>;
 
-        drawCentered(dc, w / 2, ys[0], fonts[0], "Heats", Graphics.COLOR_LT_GRAY);
-        for (var i = 0; i < shown; i += 1) {
-            drawFitted(dc, w, ys[1 + i], listFonts, (i + 1).toString() + "   " + SaunaFormat.duration(heats[i]), Graphics.COLOR_WHITE);
+        drawCentered(dc, w / 2, ys[0], fonts[0], title, Graphics.COLOR_LT_GRAY);
+        for (var i = 0; i < lines.size(); i += 1) {
+            drawFitted(dc, w, ys[1 + i], listFonts, lines[i], colors[i]);
         }
-        if (hasMore) {
-            drawFitted(dc, w, ys[1 + shown], listFonts, "+" + (heats.size() - shown) + " more", Graphics.COLOR_ORANGE);
+        if (more != null) {
+            drawFitted(dc, w, ys[1 + lines.size()], listFonts, more, Graphics.COLOR_LT_GRAY);
         }
-        drawFitted(dc, w, ys[ys.size() - 1], [fonts[0], Graphics.FONT_XTINY] as Array<Graphics.FontType>, pageHint("totals"), Graphics.COLOR_LT_GRAY);
+        drawFitted(dc, w, ys[ys.size() - 1], smallFonts, hint, Graphics.COLOR_LT_GRAY);
     }
 
     // Two short texts side by side on one row.

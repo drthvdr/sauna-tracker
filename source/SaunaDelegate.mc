@@ -1,8 +1,9 @@
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// START/STOP starts the session, then stops it and opens the Resume/Save/Discard
-// menu. BACK ends the current heat while recording.
+// START/STOP starts the session, then stops it and opens the Resume/Save/Discard menu.
+// BACK moves to the next phase while recording (sweat, rest, and so on); before a session
+// starts it goes back to the session-type menu.
 class SaunaDelegate extends WatchUi.BehaviorDelegate {
 
     private var _session as SaunaSession;
@@ -29,7 +30,7 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
     function onBack() as Boolean {
         var state = _session.getState();
         if (state == STATE_RECORDING) {
-            _session.markHeat();
+            _session.nextPhase();
             WatchUi.requestUpdate();
             return true;
         }
@@ -37,18 +38,20 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
             showStopMenu();
             return true;
         }
-        return false;
+        // Idle: back to the session-type menu, where BACK leaves the app.
+        WatchUi.switchToView(SaunaMenus.buildTypeMenu(_session.getType()), new SaunaTypeDelegate(_session), WatchUi.SLIDE_RIGHT);
+        return true;
     }
 
     // Touch screens: sweat causes stray taps and swipes, and a tap would otherwise act
     // like START, so touches are ignored. The one exception is a watch with no UP/DOWN
-    // buttons (vivoactive 5): before a session starts, tapping an alert-setting row
-    // changes it. Nothing responds to touch while recording.
+    // buttons (vivoactive 5): before a session starts, tapping a setting row changes it.
+    // Nothing responds to touch while recording.
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
         if (!SaunaLayout.hasPageButtons() && _session.getState() == STATE_IDLE) {
             var which = SaunaRound.settingAt(evt.getCoordinates()[1]);
-            if (which == :heat) {
-                _session.cycleHeatAlert();
+            if (which == :time) {
+                _session.cycleMaxTime();
                 WatchUi.requestUpdate();
             } else if (which == :hr) {
                 _session.cycleHrLimit();
@@ -62,10 +65,10 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    // UP and DOWN pick the heat alert and the heart-rate limit before starting.
+    // UP and DOWN pick the max time and the max heart rate before starting.
     function onPreviousPage() as Boolean {
         if (_session.getState() == STATE_IDLE) {
-            _session.cycleHeatAlert();
+            _session.cycleMaxTime();
             WatchUi.requestUpdate();
         }
         return true;
@@ -86,6 +89,16 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
 
 module SaunaMenus {
 
+    // The first screen: what kind of session this is. It opens on the type used last time.
+    function buildTypeMenu(current as Number) as WatchUi.Menu2 {
+        var menu = new WatchUi.Menu2({:title => "Session"});
+        menu.addItem(new WatchUi.MenuItem("Sauna", "sweat, rest", :sauna, {}));
+        menu.addItem(new WatchUi.MenuItem("Sauna + plunge", "sweat, plunge, rest", :saunaPlunge, {}));
+        menu.addItem(new WatchUi.MenuItem("Plunge", "plunge, rest", :plunge, {}));
+        menu.setFocus(current);
+        return menu;
+    }
+
     function buildStopMenu() as WatchUi.Menu2 {
         var menu = new WatchUi.Menu2({:title => "Stopped"});
         menu.addItem(new WatchUi.MenuItem("Resume", null, :resume, {}));
@@ -100,6 +113,29 @@ module SaunaMenus {
         menu.addItem(new WatchUi.MenuItem("Keep session", null, :keep, {}));
         menu.addItem(new WatchUi.MenuItem("Discard", null, :discard, {}));
         return menu;
+    }
+}
+
+// Picking a session type opens the main screen (the max time and max HR settings).
+class SaunaTypeDelegate extends WatchUi.Menu2InputDelegate {
+
+    private var _session as SaunaSession;
+
+    function initialize(session as SaunaSession) {
+        Menu2InputDelegate.initialize();
+        _session = session;
+    }
+
+    function onSelect(item as WatchUi.MenuItem) as Void {
+        var id = item.getId();
+        var type = TYPE_SAUNA;
+        if (id == :saunaPlunge) {
+            type = TYPE_SAUNA_PLUNGE;
+        } else if (id == :plunge) {
+            type = TYPE_PLUNGE;
+        }
+        _session.setType(type);
+        WatchUi.switchToView(new SaunaView(_session), new SaunaDelegate(_session), WatchUi.SLIDE_LEFT);
     }
 }
 

@@ -12,7 +12,8 @@ class SaunaApp extends Application.AppBase {
     }
 
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        return [new SaunaView(_session), new SaunaDelegate(_session)];
+        // First pick the kind of session; that leads to the main screen.
+        return [SaunaMenus.buildTypeMenu(_session.getType()), new SaunaTypeDelegate(_session)];
     }
 
     // If the app is closed mid-session, keep what was recorded rather than lose it.

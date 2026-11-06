@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+  <!-- One-bit version for the Instinct's two-color screen, used for its small launcher icon.
+       The two halves are black (sauna, upper left) and white (cold plunge, lower right), and
+       the artwork flips color where it crosses the diagonal. -->
+  <defs>
+    <clipPath id="sauna"><polygon points="0,0 500,0 0,500"/></clipPath>
+    <clipPath id="plunge"><polygon points="500,0 500,500 0,500"/></clipPath>
+  </defs>
+  <rect width="500" height="500" fill="#FFFFFF"/>
+  <polygon points="0,0 500,0 0,500" fill="#000000"/>
+  <g clip-path="url(#sauna)" transform="translate(0,16)">
+    <g fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M175 300 C135 262 215 226 175 188 S215 114 175 92"/>
+      <path d="M250 270 C210 232 290 196 250 158 S290 84 250 62"/>
+      <path d="M325 300 C285 262 365 226 325 188 S365 114 325 92"/>
+    </g>
+    <rect x="95" y="346" width="310" height="34" rx="17" fill="#FFFFFF"/>
+    <rect x="135" y="394" width="230" height="28" rx="14" fill="#FFFFFF"/>
+  </g>
+  <g clip-path="url(#plunge)" transform="translate(0,16)">
+    <g fill="none" stroke="#000000" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M175 300 C135 262 215 226 175 188 S215 114 175 92"/>
+      <path d="M250 270 C210 232 290 196 250 158 S290 84 250 62"/>
+      <path d="M325 300 C285 262 365 226 325 188 S365 114 325 92"/>
+    </g>
+    <rect x="95" y="346" width="310" height="34" rx="17" fill="#000000"/>
+    <rect x="135" y="394" width="230" height="28" rx="14" fill="#000000"/>
+  </g>
+</svg>

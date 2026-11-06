@@ -1,11 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+  <!-- Split from the top-right corner to the bottom-left: orange (sauna) on the left,
+       blue (cold plunge) on the right. The blue fills the square and the orange triangle
+       sits on top, so no seam shows along the diagonal. -->
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="warm" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#F59A3D"/>
       <stop offset="1" stop-color="#A33F12"/>
     </linearGradient>
+    <linearGradient id="cold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4DB8FF"/>
+      <stop offset="1" stop-color="#1B5FA8"/>
+    </linearGradient>
   </defs>
-  <rect width="500" height="500" fill="url(#bg)"/>
+  <rect width="500" height="500" fill="url(#cold)"/>
+  <polygon points="0,0 500,0 0,500" fill="url(#warm)"/>
   <g transform="translate(0,16)">
     <g fill="none" stroke="#FFF1DC" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
       <path d="M175 300 C135 262 215 226 175 188 S215 114 175 92"/>

@@ -1,82 +1,113 @@
 # Sauna
 
-A small Garmin Connect IQ watch app for the **Garmin Instinct 3 Solar**, the **Forerunner 965**
-and the **vivoactive 5** that records sauna sessions as their own activity. Start it, mark each
-heat, and save: heart rate, calories and a time-per-heat breakdown end up in Garmin Connect like
-any other activity, with no need to record a yoga workout and rename it afterwards.
+A small Garmin Connect IQ watch app that records sauna and cold plunge sessions as their own
+activity. It runs on the **Instinct 3 Solar**, the **Forerunner 965**, **265S** and **165**
+(including the 165 Music), and the **vivoactive 5**. Pick the kind of session, step through its
+phases with BACK, and save: heart rate, calories and a time-per-phase breakdown end up in
+Garmin Connect like any other activity, with no need to record a yoga workout and rename it
+afterwards.
 
 ## Features
 
-- **Session timer** with heart rate and calories, recorded to a normal FIT activity named "Sauna".
-- **Heats:** press BACK to end one heat and start the next (stored as laps in the FIT file).
+- **Three session types**, picked when the app opens: **Sauna**, **Sauna + plunge** and **Plunge**.
+- **Phases:** BACK moves to the next phase and starts over after the last one. Each phase is a lap
+  in the FIT file.
 - **Heart rate always in view:** in the Instinct's round subscreen, or large and centered on
-  the Forerunner 965 and vivoactive 5.
-- **Optional alerts**, set before you start and remembered between sessions:
-  a vibration when a heat reaches a chosen time, and a heart-rate limit that shows "HIGH" and
-  vibrates once a minute while you are over it.
-- **Summary after saving:** total time, average and max heart rate, calories and the time of each heat.
+  the round-screen watches.
+- **Optional alerts**, set before you start and remembered between sessions: a vibration when the
+  timed phase reaches a **max time**, and a **max HR** that shows "HIGH" and vibrates once a
+  minute while you are over it.
+- **Summary after saving**, in three pages: total time, average and max heart rate, calories and
+  rounds; the time spent in each kind of phase; and the time of each round.
 - **Safe exits:** Discard asks for confirmation, and closing the app mid-session saves it.
 
 ## Status
 
-Builds cleanly for all three watches. The Instinct version has been run in the Connect IQ
-simulator and on a watch. The Forerunner 965 version has been checked in the simulator (the
-recording and summary screens) but not on a real 965. The vivoactive 5 version builds and
-starts in the simulator, but its screens and touch controls have not been checked yet. How
-Garmin Connect labels the saved activity is still being checked (see
+Builds cleanly for all six watch models and passes the unit tests on each. Before the cold
+plunge session types were added, the app was run on an Instinct 3 Solar. The current version
+has been run in the Connect IQ simulator on every watch, and the layout was checked by measuring
+the screen on each round watch, but only the Instinct has the new version on a real wrist, and
+the Forerunners and the vivoactive 5 have not been tried on real watches at all. How Garmin
+Connect labels the saved activity and its laps is still being checked (see
 [How it is recorded](#how-it-is-recorded)).
 
 ## Using it
 
-A **heat** is one stretch in the sauna between breaks.
+When the app opens you pick the **session type**; the next screen holds the two settings, and
+START/STOP begins the session. A session is a cycle of phases: a **sweat** is time in the sauna,
+a **plunge** is time in the cold water, and **rest** is the time in between.
 
-| Button | Idle | Recording | Stopped menu |
+| Session type | Phases, in order |
+|---|---|
+| Sauna | sweat, rest |
+| Sauna + plunge | sweat, plunge, rest |
+| Plunge | plunge, rest |
+
+| Button | Settings screen | Recording | Stopped menu |
 |---|---|---|---|
 | START/STOP (GPS) | Start session | Stop and open menu | Select menu item |
-| BACK | Exit app | End the current heat | Reopen menu |
-| UP | Cycle the heat alert | – | – |
-| DOWN | Cycle the heart-rate limit | – | – |
+| BACK | Back to the session-type menu | Next phase | Reopen menu |
+| UP | Cycle the max time | – | – |
+| DOWN | Cycle the max HR | – | – |
 
-The Stopped menu offers **Resume**, **Save** and **Discard**. The top-right button is labeled
-GPS on the Instinct 3 and START/STOP on the Forerunner 965 and vivoactive 5. Touchscreens are
-ignored while the app is open, so sweat can't cause stray taps; use the buttons.
+In the session-type menu BACK leaves the app. The Stopped menu offers **Resume**, **Save** and
+**Discard**; Discard asks for confirmation first ("Keep session" is selected by default). The
+top-right button is labeled GPS on the Instinct 3 and START/STOP on the Forerunners and the
+vivoactive 5. Touchscreens are ignored while the app is open, so sweat can't cause stray taps;
+use the buttons.
 
-The vivoactive 5 has only START/STOP and BACK, no UP or DOWN. There, before a session starts,
-tap the "Heat alert" or "HR limit" row on the screen to change it, and on the summary a tap
-or an up/down swipe flips between the totals and the heats. While recording nothing responds to
-touch. The watch's touchscreen has to be enabled in its settings for this.
+The vivoactive 5 has only START/STOP and BACK, no UP or DOWN. There, on the settings screen, tap
+the "Max time" or "Max HR" row to change it, and on the summary a tap or an up swipe goes to the
+next page and a down swipe to the previous one. While recording nothing responds to touch. The
+watch's touchscreen has to be enabled in its settings for this.
 
 **Main screen (Instinct 3 Solar)**
 
-- Circle (top right): live heart rate. It turns black with "HIGH" while over your limit.
-- Top left: app state and calories.
+- Circle (top right): live heart rate. It turns black with "HIGH" while over your max HR.
+- Top left: the session type and calories.
 - Big number: time of the whole session.
-- Bottom line: current heat number and its time, plus the heat alert if one is set,
-  for example `Heat 2  3:41 / 15m`.
+- Bottom line: the phase in progress, its round and its time, plus the max time while it applies,
+  for example `Sweat 2  3:41 / 15m` or `Rest 2  1:05`.
 
-**Main screen (Forerunner 965 and vivoactive 5)**: white and colored text on black. From the top: app state,
-heart rate with its unit (on a red band while over your limit), the session timer, the current
-heat and its time, then calories. Before you start, the lower rows show the heat alert and HR
-limit settings and a "START to begin" hint. Fonts are picked to fit the round screen.
+**Main screen (the round-screen watches)**: white and colored text on black. From the top:
+the session type, heart rate with its unit (on a red band while over your max HR), the session
+timer, the phase in progress with its time (sweat orange, plunge blue, rest gray), then calories.
+The settings screen has no timer: below the session type and live heart rate it shows the max
+time and max HR and a "START to begin" hint. Fonts are picked from the screen's measurements so
+the rows fit the 360, 390 and 454 pixel screens without overlapping.
 
-**Alerts** (idle screen)
+**Alerts** (settings screen)
 
-- **Heat alert:** Off, or 5 to 30 minutes in 5-minute steps. The watch vibrates once when the
-  current heat reaches that time. Ending the heat with BACK re-arms it for the next one.
-- **HR max:** Off, or 120 to 180 bpm in steps of 10. The HR alert is a convenience, not a
-  safety device.
+- **Max time:** Off, or 5 to 30 minutes in 5-minute steps for the two sauna types, where it times
+  the sweat. For a plunge-only session it times the plunge instead, in 1 to 5 minute steps and 10.
+  The watch vibrates once when the timed phase reaches that time, and moving to the next phase
+  re-arms it. A plunge inside a sauna + plunge session, and every rest, are not timed. Each
+  session type remembers its own max time.
+- **Max HR:** Off, or 120 to 180 bpm in steps of 10, in every phase. The HR alert is a
+  convenience, not a safety device.
 
-**Summary** (after Save): totals on the first page; UP or DOWN (a tap on the vivoactive 5)
-switches to the time of each
-heat. START/STOP (GPS) or BACK closes it.
+**Summary** (after Save), three pages turned with DOWN and UP (a tap or swipe on the vivoactive 5):
+
+1. Total time, average and max heart rate, calories, and the number of rounds.
+2. Total time in each kind of phase this session type has.
+3. The time of each round's main phase: the sweat, or the plunge in a plunge-only session.
+
+START/STOP (GPS) or BACK closes it.
 
 ## Requirements
 
-- A Garmin **Instinct 3 Solar** (45mm / 50mm; device ID `instinct3solar45mm`), a
-  **Forerunner 965** (`fr965`) or a **vivoactive 5** (`vivoactive5`). Other models need their ID
-  added to the manifest and a layout check: watches with the Instinct's round subscreen use that
-  layout, all others use the centered one, and watches without UP/DOWN buttons use touch for
-  the alert settings and summary pages.
+- One of these watches. Other models need their ID added to the manifest and a layout check:
+  watches with the Instinct's round subscreen use that layout, all others use the centered one,
+  and watches without UP/DOWN buttons use touch for the settings and summary pages.
+
+  | Watch | Device ID | Screen | Layout | Controls |
+  |---|---|---|---|---|
+  | Instinct 3 Solar 45mm / 50mm | `instinct3solar45mm` | 176x176, two colors, with the round subscreen | Instinct | five buttons |
+  | Forerunner 965 | `fr965` | 454x454 round AMOLED | round | five buttons |
+  | Forerunner 265S | `fr265s` | 360x360 round AMOLED | round | five buttons |
+  | Forerunner 165 | `fr165` | 390x390 round AMOLED | round | five buttons |
+  | Forerunner 165 Music | `fr165m` | 390x390 round AMOLED | round | five buttons |
+  | vivoactive 5 | `vivoactive5` | 390x390 round AMOLED | round | START/STOP, BACK and touch |
 - The [Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/) with those devices
   installed. Built with SDK 9.3.0; the manifest asks for API level 3.2.7 or newer.
 - A JDK (`java -version` must work). Temurin 27 worked: `brew install --cask temurin`.
@@ -86,8 +117,8 @@ heat. START/STOP (GPS) or BACK closes it.
 ## Setup
 
 1. Install the SDK Manager from Garmin, open it, and download the latest SDK plus the
-   **Instinct 3 Solar 45mm / 50mm**, **Forerunner 965** and **vívoactive 5** devices. Make that
-   SDK the active one.
+   **Instinct 3 Solar 45mm / 50mm**, **Forerunner 965**, **265S**, **165**, **165 Music** and
+   **vívoactive 5** devices. Make that SDK the active one.
 2. Create a developer key. It signs your builds; keep it private and never commit it.
 
    ```bash
@@ -110,6 +141,9 @@ DEVICE=fr965 ./build.sh run  # compile and run that one in the simulator
 DEVICE=vivoactive5 ./build.sh  # vivoactive 5: bin/SaunaTracker-vivoactive5.prg
 ```
 
+`DEVICE=` takes any device ID from the table above (`fr265s`, `fr165`, `fr165m`, and so on) and
+writes `bin/SaunaTracker-<device>.prg`.
+
 The simulator shows one watch at a time, so running a second device switches it.
 
 ### Simulating heart rate
@@ -127,8 +161,9 @@ end it. The simulator's Simulation > FIT Data menu should do the same.
 ## Tests
 
 Unit tests are in `source/SaunaTests.mc` and run in the Connect IQ simulator with the SDK's
-built-in test runner. They cover time formatting, the alert settings and how they are saved, the
-tap targets, and the session lifecycle (start, mark a heat, stop, resume, save, discard). Test
+built-in test runner. They cover time formatting, the three session types and their phases, the
+settings and how they are saved, the tap targets, and the session lifecycle (start, next phase,
+stop, resume, save, discard) including the summary maths. Test
 code is left out of normal builds.
 
 ```bash
@@ -154,8 +189,11 @@ monkeyc -d instinct3solar45mm -f monkey.jungle -o bin/SaunaTracker.prg -y /path/
 
 The Instinct 3 transfers files over **MTP**, so on macOS it does not show up as a drive in
 Finder. Copying the app means putting `bin/SaunaTracker.prg` into the watch's `Garmin/Apps`
-folder with an MTP tool. For the Forerunner 965 the file is `bin/SaunaTracker-fr965.prg`; the
-steps should be the same, but they haven't been tried on a 965.
+folder with an MTP tool. For the other watches the file is `bin/SaunaTracker-<device>.prg`; the
+steps should be the same, but they have only been tried on the Instinct. To update an app already
+on the watch, delete the old `SaunaTracker.prg` from `Garmin/Apps` first (`mtp-files` shows its
+file ID and `mtp-delfile -n <id>` removes it), then copy the new one; sending a second file with
+the same name leaves two copies.
 
 1. **Quit Garmin Express and its background service.** Garmin Express takes exclusive hold of
    the watch, and while it does no other tool can see it. Quit the app, then quit the
@@ -250,8 +288,11 @@ Sessions sync to Garmin Connect through the normal watch sync.
 ## How it is recorded
 
 Connect IQ has no sauna sport type, so the app records a Training activity with the Cardio
-sub-sport and the name "Sauna". That gives a timed, heart-rate-based activity with no distance;
-the generic sport type shows up as a distance activity with zero miles. Heart rate and calories
+sub-sport, named "Sauna", "Sauna + plunge" or "Cold plunge" after the session type you picked.
+Every phase change is a lap, so a session shows up in Garmin Connect as a run of laps in the
+type's order (sweat, rest, sweat, rest, and so on). The laps carry no names there, only their
+order and times. The Training sport type gives the activity no distance, whereas the generic
+sport type would show up as a distance activity with zero miles. Heart rate and calories
 are written by the watch itself while the session runs. If Garmin Connect's label or training
 effect isn't what you want, change the sport and sub-sport in `SaunaSession.start()`.
 
@@ -263,17 +304,17 @@ effect isn't what you want, change the sport and sub-sport in `SaunaSession.star
 | `build.sh` | Build and simulator helper (macOS); `DEVICE=` picks the watch |
 | `test.sh` | Runs the unit tests in the simulator, one watch at a time |
 | `source/SaunaApp.mc` | App entry point; saves an in-progress session on exit |
-| `source/SaunaSession.mc` | Recording, heats, heart-rate stats, alerts, saved settings |
+| `source/SaunaSession.mc` | Recording, session types and phases, heart-rate stats, alerts, saved settings |
+| `source/SaunaTypes.mc` | The phases of each session type and the names shown on screen |
 | `source/SaunaView.mc` | Main screen for watches with the Instinct subscreen |
 | `source/SaunaSummary.mc` | Post-save summary screens (Instinct layout) |
-| `source/SaunaRound.mc` | Main and summary screens for watches without a subscreen (Forerunner 965, vivoactive 5) |
+| `source/SaunaRound.mc` | Main and summary screens for the watches without a subscreen (the Forerunners and the vivoactive 5) |
 | `source/SaunaDelegate.mc` | Button handling, touch guard, and the Stopped and Discard menus |
 | `source/SaunaLayout.mc` | Subscreen lookup, heart-rate circle and font-fitting helpers |
 | `source/SaunaFormat.mc` | Time formatting |
 | `source/SaunaTests.mc` | Unit tests (left out of normal builds) |
 | `resources/` | App name and launcher icon |
-| `resources-fr965/` | Launcher icon sized for the Forerunner 965 |
-| `resources-vivoactive5/` | Launcher icon sized for the vivoactive 5 |
+| `resources-<device>/` | One launcher icon per watch, sized to what it asks for: 62 px Instinct (in `resources/`), 65 px 965, 60 px 265S, 54 px 165, 56 px vivoactive 5. The 165 Music borrows the 165's through `monkey.jungle` |
 | `store/` | Connect IQ Store listing text and images |
 
 ## License

@@ -2,11 +2,13 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Shown after Save. Page 1 has the totals, page 2 the time of each heat. Average
-// heart rate goes in the round subscreen on both pages.
+// Shown after Save, in three pages: the totals, the time spent in each kind of phase, and the
+// time of each round. Average heart rate goes in the round subscreen on every page.
+const SUMMARY_PAGES = 3;
+
 class SaunaSummaryView extends WatchUi.View {
 
-    private const MAX_HEAT_ROWS = 5;
+    private const MAX_ROWS = 5;
 
     private var _summary as SessionSummary;
     private var _page as Number;
@@ -17,8 +19,9 @@ class SaunaSummaryView extends WatchUi.View {
         _page = 0;
     }
 
-    function togglePage() as Void {
-        _page = 1 - _page;
+    // delta is 1 for the next page and -1 for the previous one; the pages wrap around.
+    function turnPage(delta as Number) as Void {
+        _page = (_page + delta + SUMMARY_PAGES) % SUMMARY_PAGES;
         WatchUi.requestUpdate();
     }
 
@@ -39,19 +42,26 @@ class SaunaSummaryView extends WatchUi.View {
 
         if (_page == 0) {
             drawTotals(dc, w, h, box);
+        } else if (_page == 1) {
+            drawPhases(dc, w, h, box);
         } else {
-            drawHeats(dc, w, h, box);
+            drawRounds(dc, w, h, box);
         }
+    }
+
+    // Title and a second line in the space left of the heart-rate circle.
+    private function drawTitle(dc as Dc, box as Array<Number>, h as Number, title as String, second as String) as Void {
+        var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        dc.drawText(box[0] / 2, h * 0.09, Graphics.FONT_XTINY, title + " " + (_page + 1) + "/" + SUMMARY_PAGES, center);
+        dc.drawText(box[0] / 2, h * 0.23, Graphics.FONT_XTINY, second, center);
     }
 
     private function drawTotals(dc as Dc, w as Number, h as Number, box as Array<Number>) as Void {
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        var x = box[0] / 2;
-        var count = _summary.heatTimes.size();
+        var rounds = _summary.rounds();
         var maxHr = _summary.maxHr;
 
-        dc.drawText(x, h * 0.09, Graphics.FONT_XTINY, "Saved", center);
-        dc.drawText(x, h * 0.23, Graphics.FONT_XTINY, "DN: " + count + (count == 1 ? " heat" : " heats"), center);
+        drawTitle(dc, box, h, "Saved", rounds + (rounds == 1 ? " round" : " rounds"));
 
         var totalText = SaunaFormat.duration(_summary.totalMs);
         var totalFont = SaunaLayout.fitFont(dc, totalText, w * 0.9, [
@@ -67,22 +77,34 @@ class SaunaSummaryView extends WatchUi.View {
         dc.drawText(w * 0.73, h * 0.90, Graphics.FONT_XTINY, "kcal", center);
     }
 
-    private function drawHeats(dc as Dc, w as Number, h as Number, box as Array<Number>) as Void {
+    // Total time in each kind of phase this session type has, for example "Plunge  6:30".
+    private function drawPhases(dc as Dc, w as Number, h as Number, box as Array<Number>) as Void {
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        var x = box[0] / 2;
-        var heats = _summary.heatTimes;
+        var kinds = SaunaTypes.sequence(_summary.type);
 
-        dc.drawText(x, h * 0.09, Graphics.FONT_XTINY, "Heats", center);
-        dc.drawText(x, h * 0.23, Graphics.FONT_XTINY, "DN: totals", center);
+        drawTitle(dc, box, h, "Phases", SaunaTypes.typeName(_summary.type));
 
-        // With more heats than rows, the last row says how many are not shown.
-        var shown = heats.size() > MAX_HEAT_ROWS ? MAX_HEAT_ROWS - 1 : heats.size();
+        for (var i = 0; i < kinds.size(); i += 1) {
+            var line = SaunaTypes.phaseName(kinds[i]) + "  " + SaunaFormat.duration(_summary.totalFor(kinds[i]));
+            dc.drawText(w / 2, h * (0.46 + 0.14 * i), Graphics.FONT_TINY, line, center);
+        }
+    }
+
+    // The main phase (sweat, or plunge in a plunge-only session) of each round.
+    private function drawRounds(dc as Dc, w as Number, h as Number, box as Array<Number>) as Void {
+        var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        var times = _summary.mainTimes();
+
+        drawTitle(dc, box, h, "Rounds", SaunaTypes.phaseName(SaunaTypes.timedPhase(_summary.type)) + " times");
+
+        // With more rounds than rows, the last row says how many are not shown.
+        var shown = times.size() > MAX_ROWS ? MAX_ROWS - 1 : times.size();
         for (var i = 0; i < shown; i += 1) {
-            var line = (i + 1).toString() + "   " + SaunaFormat.duration(heats[i]);
+            var line = (i + 1).toString() + "   " + SaunaFormat.duration(times[i]);
             dc.drawText(w / 2, h * (0.42 + 0.12 * i), Graphics.FONT_TINY, line, center);
         }
-        if (shown < heats.size()) {
-            var more = heats.size() - shown;
+        if (shown < times.size()) {
+            var more = times.size() - shown;
             dc.drawText(w / 2, h * (0.42 + 0.12 * shown), Graphics.FONT_XTINY, "+" + more + " more", center);
         }
     }
@@ -98,29 +120,35 @@ class SaunaSummaryDelegate extends WatchUi.BehaviorDelegate {
     }
 
     // A stray tap or swipe must not close the summary, so touch never closes it. On a watch
-    // with no UP/DOWN buttons (vivoactive 5) a tap or an up/down swipe flips the page.
+    // with no UP/DOWN buttons (vivoactive 5) a tap or an up swipe turns to the next page and
+    // a down swipe to the previous one.
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
         if (!SaunaLayout.hasPageButtons()) {
-            _view.togglePage();
+            _view.turnPage(1);
         }
         return true;
     }
 
     function onSwipe(evt as WatchUi.SwipeEvent) as Boolean {
-        var direction = evt.getDirection();
-        if (!SaunaLayout.hasPageButtons() && (direction == WatchUi.SWIPE_UP || direction == WatchUi.SWIPE_DOWN)) {
-            _view.togglePage();
+        if (!SaunaLayout.hasPageButtons()) {
+            var direction = evt.getDirection();
+            if (direction == WatchUi.SWIPE_UP) {
+                _view.turnPage(1);
+            } else if (direction == WatchUi.SWIPE_DOWN) {
+                _view.turnPage(-1);
+            }
         }
         return true;
     }
 
+    // DOWN turns to the next page, UP to the previous one.
     function onNextPage() as Boolean {
-        _view.togglePage();
+        _view.turnPage(1);
         return true;
     }
 
     function onPreviousPage() as Boolean {
-        _view.togglePage();
+        _view.turnPage(-1);
         return true;
     }
 

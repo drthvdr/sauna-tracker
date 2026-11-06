@@ -1,6 +1,9 @@
 """Makes the two 128x128 on-device store icons from rendered PNGs.
 
 usage: python3 -I device_icons.py <full-color 128px png> <low-color 128px png> <out dir>
+       python3 -I device_icons.py --mono <input png> <output png>
+
+The second form turns a PNG into pure black and white, for the Instinct's launcher icon.
 
 Writes icon-128-24bit.png (24-bit RGB, for AMOLED watches) and icon-128-64color.png (an
 8-bit palette PNG holding Garmin's 64-color palette, for memory-in-pixel watches). Plain
@@ -79,7 +82,17 @@ def level(v):
     return min(range(4), key=lambda i: abs(LEVELS[i] - v))
 
 
+def mono(src, dst):
+    w, h, px = read_png(src)
+    rows = [[0 if (r + g + b) // 3 < 128 else 255 for r, g, b in row] for row in px]
+    write_png(dst, w, h, 0, rows)  # 8-bit grayscale holding only 0 and 255
+    print(f"{dst} written ({w}x{h}, black and white)")
+
+
 def main():
+    if sys.argv[1] == "--mono":
+        mono(sys.argv[2], sys.argv[3])
+        return
     full_path, low_path, out_dir = sys.argv[1:4]
 
     w, h, px = read_png(full_path)
