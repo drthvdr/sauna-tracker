@@ -191,9 +191,9 @@ The Instinct 3 transfers files over **MTP**, so on macOS it does not show up as 
 Finder. Copying the app means putting `bin/SaunaTracker.prg` into the watch's `Garmin/Apps`
 folder with an MTP tool. For the other watches the file is `bin/SaunaTracker-<device>.prg`; the
 steps should be the same, but they have only been tried on the Instinct. To update an app already
-on the watch, delete the old `SaunaTracker.prg` from `Garmin/Apps` first (`mtp-files` shows its
-file ID and `mtp-delfile -n <id>` removes it), then copy the new one; sending a second file with
-the same name leaves two copies.
+on the watch, copy the new build over in the same way. The watch installs a sideloaded program
+when it is unplugged and removes the file from `Apps`, so there is no old copy left there to
+delete; the app's saved settings are kept in a separate folder.
 
 1. **Quit Garmin Express and its background service.** Garmin Express takes exclusive hold of
    the watch, and while it does no other tool can see it. Quit the app, then quit the
