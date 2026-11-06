@@ -78,9 +78,9 @@ the MIT license at https://github.com/drthvdr/sauna-tracker.
 Garmin and Instinct are trademarks of Garmin Ltd. This app is not affiliated
 with or endorsed by Garmin.
 
-## What's new (version 1.0.0)
+## What's new (version 2.0.0)
 
-First release.
+2.0: Now tracks cold plunges too. Pick Sauna, Sauna + plunge or Plunge when you open the app, then press BACK to move between sweat, plunge and rest. Each phase is saved as a lap, with a three-page summary at the end. Max time and max heart rate alerts are optional and remembered for each session type.
 
 ## Permissions to explain if asked
 
